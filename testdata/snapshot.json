@@ -1,0 +1,24 @@
+{
+  "windows": [
+    {"id":101,"pid":201,"app":"Ghostty","title":"Memoir — ~/Code/tombell/memoir","role":"AXWindow","subrole":"AXStandardWindow","space":1,"display":1,"layer":0,"can-move":true,"has-ax-reference":true,"is-minimized":false,"is-native-fullscreen":false},
+    {"id":102,"pid":201,"app":"Ghostty","title":"Conjuror — ~/Code/conjuror-app/conjuror","role":"AXWindow","subrole":"AXStandardWindow","space":0,"display":1,"layer":0,"can-move":true,"has-ax-reference":true,"is-minimized":false,"is-native-fullscreen":false},
+    {"id":103,"pid":202,"app":"Safari","title":"GitHub - starkwm/swm","role":"AXWindow","subrole":"AXStandardWindow","space":0,"display":1,"layer":0,"can-move":true,"has-ax-reference":true,"is-minimized":false,"is-native-fullscreen":false},
+    {"id":104,"pid":203,"app":"Visual Studio Code","title":"AppController.swift — Conjuror","role":"AXWindow","subrole":"AXStandardWindow","space":1,"display":1,"layer":0,"can-move":true,"has-ax-reference":true,"is-minimized":false,"is-native-fullscreen":false},
+    {"id":105,"pid":204,"app":"Terminal","title":"","role":"AXWindow","subrole":"AXStandardWindow","space":0,"display":1,"layer":0,"can-move":true,"has-ax-reference":true,"is-minimized":false,"is-native-fullscreen":false},
+    {"id":106,"pid":204,"app":"Terminal","title":"","role":"AXWindow","subrole":"AXStandardWindow","space":0,"display":1,"layer":0,"can-move":true,"has-ax-reference":true,"is-minimized":false,"is-native-fullscreen":false},
+    {"id":107,"pid":205,"app":"Notes","title":"Sticky note","role":"AXWindow","subrole":"AXStandardWindow","space":0,"display":1,"layer":0,"can-move":true,"has-ax-reference":true,"is-minimized":false,"is-native-fullscreen":false},
+    {"id":108,"pid":206,"app":"TextEdit","title":"Minimized document","role":"AXWindow","subrole":"AXStandardWindow","space":0,"display":1,"layer":0,"can-move":true,"has-ax-reference":true,"is-minimized":true,"is-native-fullscreen":false},
+    {"id":109,"pid":207,"app":"Preview","title":"Fullscreen document","role":"AXWindow","subrole":"AXStandardWindow","space":2,"display":2,"layer":0,"can-move":true,"has-ax-reference":true,"is-minimized":false,"is-native-fullscreen":true},
+    {"id":110,"pid":208,"app":"Restricted","title":"No Accessibility reference","role":"AXWindow","subrole":"AXStandardWindow","space":0,"display":1,"layer":0,"can-move":true,"has-ax-reference":false,"is-minimized":false,"is-native-fullscreen":false},
+    {"id":111,"pid":209,"app":"Example","title":"Save dialog","role":"AXWindow","subrole":"AXDialog","space":0,"display":1,"layer":0,"can-move":true,"has-ax-reference":true,"is-minimized":false,"is-native-fullscreen":false}
+  ],
+  "spaces": [
+    {"id":10,"index":0,"type":"normal","displays":[1],"windows":[102,103,105,106,107,108,110,111],"has-focus":true,"is-visible":true,"is-native-fullscreen":false},
+    {"id":11,"index":1,"type":"normal","displays":[1],"windows":[101,104,107],"has-focus":false,"is-visible":false,"is-native-fullscreen":false},
+    {"id":12,"index":2,"type":"fullscreen","displays":[2],"windows":[109],"has-focus":false,"is-visible":true,"is-native-fullscreen":true}
+  ],
+  "displays": [
+    {"id":1,"uuid":"fixture-display-one","index":1,"spaces":[0,1]},
+    {"id":2,"uuid":"fixture-display-two","index":2,"spaces":[2]}
+  ]
+}

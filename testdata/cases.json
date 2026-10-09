@@ -1,0 +1,23 @@
+[
+  {"description":"the Atlas terminal","status":"matched","window_id":101,"split":"train"},
+  {"description":"Ghostty for Atlas","status":"matched","window_id":101,"split":"train"},
+  {"description":"the Beacon editor","status":"matched","window_id":104,"split":"train"},
+  {"description":"the browser with GitHub open","status":"matched","window_id":103,"split":"train"},
+  {"description":"Beacon","status":"ambiguous","split":"train"},
+  {"description":"Terminal","status":"ambiguous","split":"train"},
+  {"description":"the Slack window","status":"no_match","split":"train"},
+  {"description":"the terminal running tests","status":"no_match","split":"train"},
+  {"description":"Atlas","status":"matched","window_id":101,"split":"holdout"},
+  {"description":"Visual Studio Code Beacon","status":"matched","window_id":104,"split":"holdout"},
+  {"description":"AppController.swift","status":"matched","window_id":104,"split":"holdout"},
+  {"description":"Safari GitHub","status":"matched","window_id":103,"split":"holdout"},
+  {"description":"starkwm/swm","status":"matched","window_id":103,"split":"holdout"},
+  {"description":"the Beacon terminal","status":"matched","window_id":102,"split":"holdout"},
+  {"description":"the Ghostty window on the current Space","status":"matched","window_id":102,"split":"holdout"},
+  {"description":"the Spotify player","status":"no_match","split":"holdout"},
+  {"description":"the minimized document","status":"no_match","split":"holdout"},
+  {"description":"the fullscreen Preview document","status":"no_match","split":"holdout"},
+  {"description":"the save dialog","status":"no_match","split":"holdout"},
+  {"description":"the Atlas browser","status":"no_match","split":"holdout"},
+  {"description":"the Atlas window on the current Space","status":"no_match","split":"holdout"}
+]

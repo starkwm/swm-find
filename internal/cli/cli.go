@@ -63,6 +63,8 @@ func (r Runner) Run(ctx context.Context, args []string, stdout, stderr io.Writer
 		return 0
 	}
 	operation := args[0]
+
+	// Validate the requested operation before parsing any flags.
 	if operation != "match" && operation != "focus" && operation != "bring" {
 		fmt.Fprintln(stderr, "swm-find: expected match, focus, or bring")
 		return 64
@@ -96,8 +98,9 @@ func (r Runner) Run(ctx context.Context, args []string, stdout, stderr io.Writer
 		}
 		return 64
 	}
+	// Combine any remaining arguments into the natural-language window description.
 	query := strings.TrimSpace(strings.Join(flags.Args(), " "))
-	if query == "" || len(query) > 4096 || *apiTimeout <= 0 || *swmTimeout <= 0 || strings.TrimSpace(*model) == "" {
+	if query == "" || len(query) > match.MaxDescriptionBytes || *apiTimeout <= 0 || *swmTimeout <= 0 || strings.TrimSpace(*model) == "" {
 		fmt.Fprintln(stderr, "swm-find: provide a description of 1 to 4096 bytes, a model, and positive timeouts")
 		return 64
 	}

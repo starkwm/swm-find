@@ -142,21 +142,25 @@ func (r Runner) Run(ctx context.Context, args []string, stdout, stderr io.Writer
 	} else if response.Status != "matched" {
 		code = 2
 	}
-	if *jsonOutput {
+	return writeResult(stdout, stderr, *jsonOutput, response, code)
+}
+
+func writeResult(stdout, stderr io.Writer, jsonOutput bool, response output, code int) int {
+	if jsonOutput {
 		encoder := json.NewEncoder(stdout)
 		encoder.SetIndent("", "  ")
 		if err := encoder.Encode(response); err != nil {
 			fmt.Fprintln(stderr, "swm-find: could not write JSON result")
 			return 1
 		}
-	} else {
-		if err := printHuman(stdout, response); err != nil {
-			fmt.Fprintln(stderr, "swm-find: could not write result")
-			return 1
-		}
-		if response.Error != "" {
-			fmt.Fprintln(stderr, "swm-find:", response.Error)
-		}
+		return code
+	}
+	if err := printHuman(stdout, response); err != nil {
+		fmt.Fprintln(stderr, "swm-find: could not write result")
+		return 1
+	}
+	if response.Error != "" {
+		fmt.Fprintln(stderr, "swm-find:", response.Error)
 	}
 	return code
 }

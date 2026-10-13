@@ -35,7 +35,7 @@ func (c Client) Evaluate(ctx context.Context, query string, candidates []match.C
 	if strings.TrimSpace(c.APIKey) == "" {
 		return match.Prediction{}, errors.New("set TYPESAFE_API_KEY to use Jev matching")
 	}
-	if len(candidates) == 0 || len(candidates) > 254 {
+	if len(candidates) == 0 || len(candidates) > match.MaxCandidates {
 		return match.Prediction{}, errors.New("TypeSafe requires 1 to 254 candidate windows")
 	}
 	model := c.Model

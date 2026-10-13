@@ -13,6 +13,12 @@ import (
 	"github.com/starkwm/swm-find/internal/swm"
 )
 
+// MaxCandidates is the largest number of windows that can be evaluated in one request.
+const MaxCandidates = 254
+
+// MaxDescriptionBytes is the maximum accepted query length.
+const MaxDescriptionBytes = 4096
+
 type Candidate struct {
 	Key         string     `json:"key"`
 	Window      swm.Window `json:"window"`
@@ -89,7 +95,7 @@ func Candidates(snapshot swm.Snapshot, excluded []string) ([]Candidate, error) {
 		}
 		result = append(result, Candidate{Key: fmt.Sprintf("w%d", len(result)+1), Window: w, SpaceID: space.ID, Location: location})
 	}
-	if len(result) > 254 {
+	if len(result) > MaxCandidates {
 		return nil, errors.New("more than 254 eligible windows; exclude apps to narrow the candidates")
 	}
 	return result, nil
@@ -108,7 +114,7 @@ func Resolve(ctx context.Context, query string, snapshot swm.Snapshot, excluded 
 	if err := policy.Validate(); err != nil {
 		return Result{}, err
 	}
-	if strings.TrimSpace(query) == "" || len(query) > 4096 {
+	if strings.TrimSpace(query) == "" || len(query) > MaxDescriptionBytes {
 		return Result{}, errors.New("description must contain 1 to 4096 bytes")
 	}
 	candidates, err := Candidates(snapshot, excluded)
@@ -116,6 +122,7 @@ func Resolve(ctx context.Context, query string, snapshot swm.Snapshot, excluded 
 		return Result{}, err
 	}
 	result := Result{Status: "no_match", Candidates: candidates, Policy: policy}
+
 	if len(candidates) == 0 {
 		return result, nil
 	}

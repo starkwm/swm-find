@@ -17,6 +17,7 @@ import (
 const Endpoint = "https://api.typesafe.ai/v1/systemone"
 const DefaultModel = "jev-1.13.0"
 
+// Client calls the TypeSafe HTTP API.
 type Client struct {
 	APIKey   string
 	Model    string
@@ -31,6 +32,7 @@ type candidateState struct {
 	Location string `json:"location"`
 }
 
+// Evaluate sends candidate metadata and decodes the model prediction.
 func (c Client) Evaluate(ctx context.Context, query string, candidates []match.Candidate) (match.Prediction, error) {
 	if strings.TrimSpace(c.APIKey) == "" {
 		return match.Prediction{}, errors.New("set TYPESAFE_API_KEY to use Jev matching")

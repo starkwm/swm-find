@@ -19,6 +19,7 @@ const MaxCandidates = 254
 // MaxDescriptionBytes is the maximum accepted query length.
 const MaxDescriptionBytes = 4096
 
+// Candidate represents one eligible window exposed to the model.
 type Candidate struct {
 	Key         string     `json:"key"`
 	Window      swm.Window `json:"window"`
@@ -27,6 +28,7 @@ type Candidate struct {
 	Probability float64    `json:"probability"`
 }
 
+// Prediction is a model response for a window-choice request.
 type Prediction struct {
 	Model         string
 	Choice        string
@@ -35,18 +37,22 @@ type Prediction struct {
 	Exists        float64
 }
 
+// Evaluator asks the model to choose among candidates.
 type Evaluator interface {
 	Evaluate(context.Context, string, []Candidate) (Prediction, error)
 }
 
+// Policy holds acceptance thresholds for a match result.
 type Policy struct {
 	MinProbability float64 `json:"min_probability"`
 	MinExists      float64 `json:"min_exists"`
 	MinMargin      float64 `json:"min_margin"`
 }
 
+// DefaultPolicy returns the initial acceptance thresholds.
 func DefaultPolicy() Policy { return Policy{0.8, 0.85, 0.2} }
 
+// Validate reports whether every threshold is a nonzero probability.
 func (p Policy) Validate() error {
 	for _, value := range []float64{p.MinProbability, p.MinExists, p.MinMargin} {
 		if !probability(value) || value == 0 {
@@ -56,6 +62,7 @@ func (p Policy) Validate() error {
 	return nil
 }
 
+// Result is the outcome of resolving a description against a snapshot.
 type Result struct {
 	Status      string      `json:"status"`
 	Selected    *Candidate  `json:"selected,omitempty"`
@@ -68,12 +75,14 @@ type Result struct {
 	Policy      Policy      `json:"policy"`
 }
 
+// Eligible reports whether a window may be considered as a match target.
 func Eligible(w swm.Window) bool {
 	return w.ID != 0 && w.PID != nil && *w.PID > 0 && w.App != "" && w.HasAXReference &&
 		!w.IsMinimized && !w.IsNativeFullscreen && w.Role == "AXWindow" &&
 		w.Subrole == "AXStandardWindow" && w.Layer != nil && *w.Layer == 0
 }
 
+// Candidates builds the eligible, excluded, and Space-annotated candidate list.
 func Candidates(snapshot swm.Snapshot, excluded []string) ([]Candidate, error) {
 	if err := snapshot.Validate(); err != nil {
 		return nil, err
@@ -110,6 +119,7 @@ func isExcluded(app string, excluded []string) bool {
 	return false
 }
 
+// Resolve asks the model to select a candidate and applies the policy.
 func Resolve(ctx context.Context, query string, snapshot swm.Snapshot, excluded []string, evaluator Evaluator, policy Policy) (Result, error) {
 	if err := policy.Validate(); err != nil {
 		return Result{}, err
@@ -164,6 +174,7 @@ func Resolve(ctx context.Context, query string, snapshot swm.Snapshot, excluded 
 	return result, nil
 }
 
+// ValidatePrediction checks that a model response has a complete, consistent shape.
 func ValidatePrediction(p Prediction, candidates []Candidate) error {
 	if p.Model == "" || !probability(p.Confidence) || !probability(p.Exists) || len(p.Probabilities) != len(candidates)+1 {
 		return errors.New("TypeSafe returned incomplete or invalid prediction fields")

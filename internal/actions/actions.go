@@ -11,13 +11,16 @@ import (
 	"github.com/starkwm/swm-find/internal/swm"
 )
 
+// ErrStale indicates the desktop state changed before an action.
 var ErrStale = errors.New("desktop context changed; run the request again")
 
+// Step records one submitted swm operation.
 type Step struct {
 	Arguments []string `json:"arguments"`
 	Status    string   `json:"status"`
 }
 
+// Result summarizes an action attempt.
 type Result struct {
 	Status             string  `json:"action_status"`
 	DestinationSpaceID uint64  `json:"destination_space_id"`
@@ -25,6 +28,7 @@ type Result struct {
 	ObservedSpaceID    *uint64 `json:"observed_space_id,omitempty"`
 }
 
+// Run revalidates and executes a focus or bring operation.
 func Run(ctx context.Context, backend swm.Backend, operation string, selected match.Candidate, initial swm.Snapshot, dryRun bool) (Result, error) {
 	result := Result{Status: "planned", Steps: []Step{}}
 	if operation != "focus" && operation != "bring" {

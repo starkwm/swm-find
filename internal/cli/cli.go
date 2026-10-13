@@ -28,6 +28,7 @@ Jev receives your description and eligible window app names and titles.
 Set TYPESAFE_API_KEY before using matching. No request or title logs are saved.
 `
 
+// Runner contains injectable dependencies for the CLI.
 type Runner struct {
 	Backend   swm.Backend
 	Evaluator match.Evaluator
@@ -53,6 +54,7 @@ func (f *stringsFlag) Set(value string) error {
 	return nil
 }
 
+// Run parses arguments, resolves a window, and writes the result.
 func (r Runner) Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 || args[0] == "help" || args[0] == "--help" || args[0] == "-h" {
 		fmt.Fprint(stdout, usage)

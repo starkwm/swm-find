@@ -48,6 +48,7 @@ type Shuffled struct {
 	Seed      int64
 }
 
+// Evaluate restores the original candidate keys after model evaluation.
 func (s Shuffled) Evaluate(ctx context.Context, query string, candidates []match.Candidate) (match.Prediction, error) {
 	shuffled := append([]match.Candidate(nil), candidates...)
 	rng := rand.New(rand.NewSource(s.Seed))

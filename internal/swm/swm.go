@@ -53,6 +53,7 @@ type Snapshot struct {
 	Displays []Display `json:"displays"`
 }
 
+// Validate checks basic window and Space identity uniqueness.
 func (s Snapshot) Validate() error {
 	windows := make(map[uint32]bool)
 	for _, w := range s.Windows {
@@ -72,6 +73,7 @@ func (s Snapshot) Validate() error {
 	return nil
 }
 
+// ActiveSpace returns the single focused normal desktop Space.
 func (s Snapshot) ActiveSpace() (Space, error) {
 	var result Space
 	count := 0
@@ -87,8 +89,10 @@ func (s Snapshot) ActiveSpace() (Space, error) {
 	return result, nil
 }
 
+// Normal reports whether the Space is a non-fullscreen desktop Space.
 func (s Space) Normal() bool { return s.Type == "normal" && !s.IsNativeFullscreen }
 
+// SpaceByID looks up a Space by its stable ID.
 func (s Snapshot) SpaceByID(id uint64) (Space, bool) {
 	for _, space := range s.Spaces {
 		if space.ID == id {
@@ -117,6 +121,7 @@ func (s Snapshot) WindowSpace(w Window) (Space, error) {
 	return result, nil
 }
 
+// WindowByID looks up a Window by its ID.
 func (s Snapshot) WindowByID(id uint32) (Window, bool) {
 	for _, w := range s.Windows {
 		if w.ID == id {
@@ -143,11 +148,13 @@ func (s Snapshot) CanActivate(target Space) error {
 	return nil
 }
 
+// Backend abstracts swm process access.
 type Backend interface {
 	Snapshot(context.Context) (Snapshot, error)
 	Execute(context.Context, ...string) error
 }
 
+// Client runs swm through bounded subprocesses.
 type Client struct {
 	Path    string
 	Timeout time.Duration
@@ -179,6 +186,7 @@ func (c Client) run(ctx context.Context, args ...string) ([]byte, error) {
 	return stdout.Bytes(), nil
 }
 
+// Snapshot queries windows, Spaces, and displays from swm.
 func (c Client) Snapshot(ctx context.Context) (Snapshot, error) {
 	var snapshot Snapshot
 	queries := []struct {
@@ -199,11 +207,13 @@ func (c Client) Snapshot(ctx context.Context) (Snapshot, error) {
 	return snapshot, snapshot.Validate()
 }
 
+// Execute runs a swm command.
 func (c Client) Execute(ctx context.Context, args ...string) error {
 	_, err := c.run(ctx, args...)
 	return err
 }
 
+// WindowID formats a window ID for swm command arguments.
 func WindowID(id uint32) string { return strconv.FormatUint(uint64(id), 10) }
 
 type boundedBuffer struct {

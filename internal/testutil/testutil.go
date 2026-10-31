@@ -14,22 +14,27 @@ import (
 // Snapshot loads the shared synthetic snapshot for tests.
 func Snapshot(t testing.TB) swm.Snapshot {
 	t.Helper()
+
 	data, err := os.ReadFile("../../testdata/snapshot.json")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	var snapshot swm.Snapshot
 	if err := json.Unmarshal(data, &snapshot); err != nil {
 		t.Fatal(err)
 	}
+
 	return snapshot
 }
 
 // Clone deep-copies a snapshot through JSON.
 func Clone(snapshot swm.Snapshot) swm.Snapshot {
 	data, _ := json.Marshal(snapshot)
+
 	var result swm.Snapshot
 	_ = json.Unmarshal(data, &result)
+
 	return result
 }
 
@@ -51,6 +56,7 @@ func Prediction(candidates []match.Candidate, id uint32) match.Prediction {
 			prediction.Probabilities[candidate.Key] = 1
 		}
 	}
+
 	return prediction
 }
 
@@ -69,6 +75,7 @@ func (b *Backend) Snapshot(context.Context) (swm.Snapshot, error) {
 	if b.OnSnapshot != nil {
 		b.OnSnapshot(b)
 	}
+
 	return Clone(b.State), nil
 }
 
@@ -78,5 +85,6 @@ func (b *Backend) Execute(_ context.Context, args ...string) error {
 	if b.OnExecute != nil {
 		return b.OnExecute(b, args)
 	}
+
 	return nil
 }

@@ -14,8 +14,14 @@ import (
 	"github.com/starkwm/swm-find/internal/match"
 )
 
+// Endpoint is the default TypeSafe API URL.
 const Endpoint = "https://api.typesafe.ai/v1/systemone"
+
+// DefaultModel is the pinned Jev model version used when none is configured.
 const DefaultModel = "jev-1.13.0"
+
+// statusOverloaded is TypeSafe's nonstandard overloaded response code.
+const statusOverloaded = 529
 
 // Client calls the TypeSafe HTTP API.
 type Client struct {
@@ -37,13 +43,16 @@ func (c Client) Evaluate(ctx context.Context, query string, candidates []match.C
 	if strings.TrimSpace(c.APIKey) == "" {
 		return match.Prediction{}, errors.New("set TYPESAFE_API_KEY to use Jev matching")
 	}
+
 	if len(candidates) == 0 || len(candidates) > match.MaxCandidates {
-		return match.Prediction{}, errors.New("TypeSafe requires 1 to 254 candidate windows")
+		return match.Prediction{}, fmt.Errorf("TypeSafe requires 1 to %d candidate windows", match.MaxCandidates)
 	}
+
 	model := c.Model
 	if model == "" {
 		model = DefaultModel
 	}
+
 	states := make([]candidateState, 0, len(candidates))
 	criteria := map[string]any{"none": "No candidate's app name, title, and location provide evidence for the requested window."}
 	for _, candidate := range candidates {
@@ -51,6 +60,7 @@ func (c Client) Evaluate(ctx context.Context, query string, candidates []match.C
 		states = append(states, state)
 		criteria[candidate.Key] = state
 	}
+
 	payload := map[string]any{
 		"model": model,
 		"state": map[string]any{"description": query, "windows": states},
@@ -67,57 +77,70 @@ func (c Client) Evaluate(ctx context.Context, query string, candidates []match.C
 			},
 		},
 	}
+
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return match.Prediction{}, err
 	}
+
 	if len(data) > 128<<10 {
 		return match.Prediction{}, errors.New("window metadata exceeds request size limit; exclude apps to narrow the candidates")
 	}
+
 	endpoint := c.Endpoint
 	if endpoint == "" {
 		endpoint = Endpoint
 	}
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(data))
 	if err != nil {
 		return match.Prediction{}, errors.New("invalid TypeSafe endpoint")
 	}
+
 	req.Header.Set("Authorization", "Bearer "+c.APIKey)
 	req.Header.Set("Content-Type", "application/json")
+
 	client := c.HTTP
 	if client == nil {
 		client = &http.Client{}
 	}
+
 	// Never follow an API redirect with credentials or window metadata.
 	localClient := *client
 	localClient.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+
 	response, err := localClient.Do(req)
 	if err != nil {
 		if ctx.Err() != nil {
 			return match.Prediction{}, fmt.Errorf("TypeSafe request: %w", ctx.Err())
 		}
+
 		return match.Prediction{}, errors.New("TypeSafe request failed; check your network connection")
 	}
 	defer response.Body.Close()
+
 	if response.StatusCode != http.StatusOK {
 		// Do not echo an upstream response, which could include submitted titles or credentials.
 		message := "request failed"
 		switch response.StatusCode {
-		case 401:
+		case http.StatusUnauthorized:
 			message = "API key is missing or invalid"
-		case 422:
+		case http.StatusUnprocessableEntity:
 			message = "request or model was rejected"
-		case 429:
+		case http.StatusTooManyRequests:
 			message = "rate limited; retry later"
-		case 529:
+		case statusOverloaded:
 			message = "service overloaded; retry later"
 		}
+
 		return match.Prediction{}, fmt.Errorf("TypeSafe HTTP %d: %s", response.StatusCode, message)
 	}
+
 	body, err := io.ReadAll(io.LimitReader(response.Body, (1<<20)+1))
 	if err != nil || len(body) > 1<<20 {
 		return match.Prediction{}, errors.New("TypeSafe response could not be read or exceeds size limit")
 	}
+
 	var decoded struct {
 		Model   string `json:"model"`
 		Answers struct {
@@ -133,13 +156,17 @@ func (c Client) Evaluate(ctx context.Context, query string, candidates []match.C
 			} `json:"exists"`
 		} `json:"answers"`
 	}
+
 	if err := json.Unmarshal(body, &decoded); err != nil {
 		return match.Prediction{}, errors.New("TypeSafe returned invalid JSON")
 	}
+
 	window, exists := decoded.Answers.Window, decoded.Answers.Exists
 	if window.Type != "choice" || exists.Type != "noul" || window.Confidence == nil || exists.Noul == nil {
 		return match.Prediction{}, errors.New("TypeSafe returned missing or unexpected answer types")
 	}
+
 	prediction := match.Prediction{Model: decoded.Model, Choice: window.Choice, Probabilities: window.Probabilities, Confidence: *window.Confidence, Exists: *exists.Noul}
+
 	return prediction, match.ValidatePrediction(prediction, candidates)
 }

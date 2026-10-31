@@ -13,6 +13,7 @@ import (
 	"time"
 )
 
+// Window is one entry from swm's query windows output.
 type Window struct {
 	ID                 uint32  `json:"id"`
 	PID                *int    `json:"pid"`
@@ -29,6 +30,7 @@ type Window struct {
 	IsNativeFullscreen bool    `json:"is-native-fullscreen"`
 }
 
+// Space is one entry from swm's query spaces output.
 type Space struct {
 	ID                 uint64   `json:"id"`
 	Index              int      `json:"index"`
@@ -40,6 +42,7 @@ type Space struct {
 	IsNativeFullscreen bool     `json:"is-native-fullscreen"`
 }
 
+// Display is one entry from swm's query displays output.
 type Display struct {
 	ID     *uint32 `json:"id"`
 	UUID   string  `json:"uuid"`
@@ -47,6 +50,7 @@ type Display struct {
 	Spaces []int   `json:"spaces"`
 }
 
+// Snapshot holds the windows, Spaces, and displays read at one point in time.
 type Snapshot struct {
 	Windows  []Window  `json:"windows"`
 	Spaces   []Space   `json:"spaces"`
@@ -60,16 +64,20 @@ func (s Snapshot) Validate() error {
 		if w.ID == 0 || windows[w.ID] {
 			return errors.New("window query has a missing or duplicate ID")
 		}
+
 		windows[w.ID] = true
 	}
+
 	spaces := make(map[uint64]bool)
 	indexes := make(map[int]bool)
 	for _, space := range s.Spaces {
 		if space.ID == 0 || space.Index < 0 || spaces[space.ID] || indexes[space.Index] {
 			return errors.New("Space query has a missing or duplicate ID or index")
 		}
+
 		spaces[space.ID], indexes[space.Index] = true, true
 	}
+
 	return nil
 }
 
@@ -83,9 +91,11 @@ func (s Snapshot) ActiveSpace() (Space, error) {
 			count++
 		}
 	}
+
 	if count != 1 || !result.Normal() {
 		return Space{}, errors.New("cannot identify one active normal desktop Space")
 	}
+
 	return result, nil
 }
 
@@ -99,6 +109,7 @@ func (s Snapshot) SpaceByID(id uint64) (Space, bool) {
 			return space, true
 		}
 	}
+
 	return Space{}, false
 }
 
@@ -115,9 +126,11 @@ func (s Snapshot) WindowSpace(w Window) (Space, error) {
 			}
 		}
 	}
+
 	if count != 1 || !result.Normal() || w.Space == nil || *w.Space != result.Index {
 		return Space{}, errors.New("window must belong to exactly one normal desktop Space")
 	}
+
 	return result, nil
 }
 
@@ -128,6 +141,7 @@ func (s Snapshot) WindowByID(id uint32) (Window, bool) {
 			return w, true
 		}
 	}
+
 	return Window{}, false
 }
 
@@ -136,6 +150,7 @@ func (s Snapshot) CanActivate(target Space) error {
 	if len(target.Displays) == 0 {
 		return errors.New("destination Space has no known display")
 	}
+
 	for _, space := range s.Spaces {
 		for _, display := range space.Displays {
 			for _, targetDisplay := range target.Displays {
@@ -145,6 +160,7 @@ func (s Snapshot) CanActivate(target Space) error {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -166,23 +182,29 @@ func (c Client) run(ctx context.Context, args ...string) ([]byte, error) {
 	if path == "" {
 		path = "swm"
 	}
+
 	timeout := c.Timeout
 	if timeout <= 0 {
 		timeout = 5 * time.Second
 	}
+
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+
 	cmd := exec.CommandContext(ctx, path, args...)
 	stdout := &boundedBuffer{limit: 4 << 20}
 	cmd.Stdout = stdout
 	// stderr can contain window metadata. Keep it out of default diagnostics.
 	cmd.Stderr = io.Discard
+
 	if err := cmd.Run(); err != nil {
 		if ctx.Err() != nil {
 			return nil, fmt.Errorf("swm command: %w", ctx.Err())
 		}
+
 		return nil, fmt.Errorf("swm command failed: %w", err)
 	}
+
 	return stdout.Bytes(), nil
 }
 
@@ -195,15 +217,18 @@ func (c Client) Snapshot(ctx context.Context) (Snapshot, error) {
 	}{
 		{"windows", &snapshot.Windows}, {"spaces", &snapshot.Spaces}, {"displays", &snapshot.Displays},
 	}
+
 	for _, query := range queries {
 		data, err := c.run(ctx, "query", query.name)
 		if err != nil {
 			return Snapshot{}, fmt.Errorf("query %s: %w", query.name, err)
 		}
+
 		if err := json.Unmarshal(data, query.value); err != nil {
 			return Snapshot{}, fmt.Errorf("query %s returned invalid JSON", query.name)
 		}
 	}
+
 	return snapshot, snapshot.Validate()
 }
 
@@ -225,5 +250,6 @@ func (b *boundedBuffer) Write(data []byte) (int, error) {
 	if len(data) > b.limit-b.Len() {
 		return 0, errors.New("swm output exceeds size limit")
 	}
+
 	return b.Buffer.Write(data)
 }

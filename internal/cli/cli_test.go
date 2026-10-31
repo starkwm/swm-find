@@ -19,8 +19,10 @@ func TestJSONMatchAndDryRun(t *testing.T) {
 		runner := cli.Runner{Backend: backend, Evaluator: testutil.EvaluatorFunc(func(_ context.Context, _ string, c []match.Candidate) (match.Prediction, error) {
 			return testutil.Prediction(c, 101), nil
 		})}
+
 		var out, diagnostics bytes.Buffer
 		code := runner.Run(context.Background(), args, &out, &diagnostics)
+
 		var result struct {
 			Status    string `json:"status"`
 			Operation string `json:"operation"`
@@ -28,12 +30,15 @@ func TestJSONMatchAndDryRun(t *testing.T) {
 				Status string `json:"action_status"`
 			} `json:"action"`
 		}
+
 		if err := json.Unmarshal(out.Bytes(), &result); err != nil {
 			t.Fatal(err)
 		}
+
 		if code != 0 || result.Status != "matched" || len(backend.Commands) != 0 || diagnostics.Len() != 0 {
 			t.Fatalf("code=%d result=%v commands=%v stderr=%q", code, result, backend.Commands, diagnostics.String())
 		}
+
 		if args[0] == "bring" && (result.Action == nil || result.Action.Status != "planned") {
 			t.Fatal("missing dry run")
 		}
@@ -48,6 +53,7 @@ func TestNoMatchAndAmbiguousNeverExecute(t *testing.T) {
 			p.Exists = exists
 			return p, nil
 		})}
+
 		var out, diagnostics bytes.Buffer
 		code := runner.Run(context.Background(), []string{"focus", "--json", "a terminal"}, &out, &diagnostics)
 		if code != 2 || len(backend.Commands) != 0 || !json.Valid(out.Bytes()) {
@@ -59,6 +65,7 @@ func TestNoMatchAndAmbiguousNeverExecute(t *testing.T) {
 func TestInvalidArgumentsDoNotReadDesktop(t *testing.T) {
 	for _, args := range [][]string{{"other"}, {"match"}, {"match", "--min-probability", "NaN", "query"}, {"match", "--api-timeout", "0s", "query"}, {"match", "--dry-run", "query"}} {
 		backend := &testutil.Backend{State: testutil.Snapshot(t)}
+
 		var out, diagnostics bytes.Buffer
 		code := (cli.Runner{Backend: backend}).Run(context.Background(), args, &out, &diagnostics)
 		if code != 64 || backend.SnapshotCount != 0 {
@@ -72,6 +79,7 @@ func TestAPIErrorProducesJSONAndPreventsAction(t *testing.T) {
 	runner := cli.Runner{Backend: backend, Evaluator: testutil.EvaluatorFunc(func(context.Context, string, []match.Candidate) (match.Prediction, error) {
 		return match.Prediction{}, errors.New("service unavailable")
 	})}
+
 	var out, diagnostics bytes.Buffer
 	code := runner.Run(context.Background(), []string{"bring", "--json", "query"}, &out, &diagnostics)
 	if code != 1 || len(backend.Commands) != 0 || !strings.Contains(out.String(), `"status": "error"`) || !json.Valid(out.Bytes()) {
@@ -87,8 +95,10 @@ func TestExcludeAppliedBeforeEvaluator(t *testing.T) {
 				t.Fatal("excluded metadata reached evaluator")
 			}
 		}
+
 		return testutil.Prediction(c, 101), nil
 	})
+
 	var out, diagnostics bytes.Buffer
 	code := (cli.Runner{Backend: backend, Evaluator: evaluator}).Run(context.Background(), []string{"match", "--exclude-app", "safari", "query"}, &out, &diagnostics)
 	if code != 0 {
@@ -102,6 +112,7 @@ func TestHumanOutputEscapesControlCharacters(t *testing.T) {
 	evaluator := testutil.EvaluatorFunc(func(_ context.Context, _ string, c []match.Candidate) (match.Prediction, error) {
 		return testutil.Prediction(c, 101), nil
 	})
+
 	var out, diagnostics bytes.Buffer
 	code := (cli.Runner{Backend: backend, Evaluator: evaluator}).Run(context.Background(), []string{"match", "query"}, &out, &diagnostics)
 	if code != 0 || strings.Contains(out.String(), "\x1b") || !strings.Contains(out.String(), `\n\x1b`) {

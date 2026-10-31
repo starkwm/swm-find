@@ -11,6 +11,7 @@ import (
 
 func TestLexicalBaseline(t *testing.T) {
 	candidates, _ := match.Candidates(testutil.Snapshot(t), nil)
+
 	for _, test := range []struct {
 		query, status string
 		id            uint32
@@ -27,6 +28,7 @@ func TestShufflePreservesWindowIdentity(t *testing.T) {
 	evaluator := testutil.EvaluatorFunc(func(_ context.Context, _ string, c []match.Candidate) (match.Prediction, error) {
 		return testutil.Prediction(c, 101), nil
 	})
+
 	for seed := int64(0); seed < 20; seed++ {
 		prediction, err := (eval.Shuffled{Evaluator: evaluator, Seed: seed}).Evaluate(context.Background(), "Atlas", candidates)
 		if err != nil || prediction.Choice != candidates[0].Key || prediction.Probabilities[candidates[0].Key] != 1 {
